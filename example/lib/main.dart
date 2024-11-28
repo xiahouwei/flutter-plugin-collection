@@ -40,7 +40,7 @@ class _MyAppState extends State<MyApp> {
     // Platform messages may fail, so we use a try/catch PlatformException.
     // We also handle the message potentially returning null.
     try {
-      int phoneBatteryInt =  await Hello.getPhoneBattery;
+      int phoneBatteryInt = await Hello.getPhoneBattery;
       phoneBattery = '$phoneBatteryInt';
       platformVersion =
           await Hello.platformVersion ?? 'Unknown platform version';
@@ -72,14 +72,18 @@ class _MyAppState extends State<MyApp> {
           title: const Text('Plugin example app'),
         ),
         body: Center(
-          child: Column(
-              children: [
-                Text('Running on: $_platformVersion\n'),
-                Text('电量: $_phoneBattery\n'),
-                Text('充电状态: $_phoneBatterStatus\n'),
-                Text('USB状态: $usbString\n'),
-              ]
-          ),
+          child: Column(children: [
+            Text('Running on: $_platformVersion\n'),
+            Text('电量: $_phoneBattery\n'),
+            Text('充电状态: $_phoneBatterStatus\n'),
+            Text('USB状态: $usbString\n'),
+            ElevatedButton(
+              child: Text('扫描'),
+              onPressed: () {
+                Hello.showScan();
+              },
+            )
+          ]),
         ),
       ),
     );

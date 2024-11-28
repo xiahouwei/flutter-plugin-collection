@@ -22,6 +22,11 @@ class Hello {
     return result;
   }
 
+  static Future<String?> showScan() async {
+    final String? result = await _channel.invokeMethod('showScan');
+    return result;
+  }
+
   // 注册事件
   static const EventChannel _eventChannel = EventChannel('hello.eventChannel');
 

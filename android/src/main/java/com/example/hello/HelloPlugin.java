@@ -1,5 +1,6 @@
 package com.example.hello;
 
+import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -9,15 +10,22 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 
+import cn.iwgang.licenseplatediscern.LicensePlateDiscernCore;
+import cn.iwgang.licenseplatediscern.LicensePlateInfo;
+import cn.iwgang.licenseplatediscern.view.LicensePlateDiscernView;
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
+import io.flutter.embedding.engine.plugins.activity.ActivityAware;
+import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding;
 import io.flutter.plugin.common.EventChannel;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
+import kotlin.Unit;
+import kotlin.jvm.functions.Function1;
 
 /** HelloPlugin */
-public class HelloPlugin implements FlutterPlugin, MethodCallHandler, EventChannel.StreamHandler {
+public class HelloPlugin implements FlutterPlugin, MethodCallHandler, EventChannel.StreamHandler, ActivityAware {
   /// The MethodChannel that will the communication between Flutter and native Android
   ///
   /// This local reference serves to register the plugin with the Flutter Engine and unregister it
@@ -29,6 +37,10 @@ public class HelloPlugin implements FlutterPlugin, MethodCallHandler, EventChann
 
   private EventChannel.EventSink events;
   private BroadcastReceiver usbReceiver;
+
+  private Activity activity;
+
+  private LicensePlateDiscernView cvLicensePlateDiscernView;
 
 
   // onAttachedToEngine 是 Flutter 插件中的一个生命周期方法，在 Flutter 插件开发中，用于插件和 Flutter 引擎（engine）之间的绑定。
@@ -55,6 +67,7 @@ public class HelloPlugin implements FlutterPlugin, MethodCallHandler, EventChann
     // 注册事件通道，处理来自 Flutter 的事件流
     EventChannel eventChannel = new EventChannel(flutterPluginBinding.getBinaryMessenger(), "hello.eventChannel");
     eventChannel.setStreamHandler((EventChannel.StreamHandler) this);
+    LicensePlateDiscernCore.Companion.init(this.context);
   }
 
   @Override
@@ -65,9 +78,34 @@ public class HelloPlugin implements FlutterPlugin, MethodCallHandler, EventChann
       result.success(getPhoneBattery(context));
     } else if (call.method.equals("getPhoneBatteryCharging")) {
       result.success(getPhoneBatteryCharging(context));
+    } else if (call.method.equals("showScan")) {
+      showScan();
+      result.success("OK");
     } else {
       result.notImplemented();
     }
+  }
+
+  private void showScan () {
+    activity.runOnUiThread(() -> {
+      activity.setContentView(R.layout.activity_main);
+      // 通过 ID 获取 LicensePlateDiscernView
+      cvLicensePlateDiscernView = activity.findViewById(R.id.cv_licensePlateDiscernView);
+      // 设置车牌识别回调监听器
+      cvLicensePlateDiscernView.setOnDiscernListener(new Function1<LicensePlateInfo, Unit>() {
+        @Override
+        public Unit invoke(LicensePlateInfo result) {
+          // 处理回调逻辑
+          String scanResult = "识别结果：" + result.getLicensePlate() + "（可信度：" + result.getConfidence() + "）";
+          System.out.println(scanResult);
+
+          // 重新识别
+          cvLicensePlateDiscernView.reDiscern();
+
+          return Unit.INSTANCE; // 必须返回 Unit.INSTANCE
+        }
+      });
+    });
   }
 
   private int getPhoneBattery(Context context) {
@@ -155,5 +193,25 @@ public class HelloPlugin implements FlutterPlugin, MethodCallHandler, EventChann
   @Override
   public void onDetachedFromEngine(@NonNull FlutterPluginBinding binding) {
     channel.setMethodCallHandler(null);
+  }
+
+  @Override
+  public void onAttachedToActivity(@NonNull ActivityPluginBinding binding) {
+    this.activity = binding.getActivity();
+  }
+
+  @Override
+  public void onDetachedFromActivityForConfigChanges() {
+    this.activity = null;
+  }
+
+  @Override
+  public void onReattachedToActivityForConfigChanges(@NonNull ActivityPluginBinding binding) {
+    this.activity = binding.getActivity();
+  }
+
+  @Override
+  public void onDetachedFromActivity() {
+    this.activity = null;
   }
 }
