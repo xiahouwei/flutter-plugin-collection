@@ -9,6 +9,8 @@ import android.graphics.Rect;
 import android.os.BatteryManager;
 import android.os.Vibrator;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 
 import androidx.annotation.NonNull;
 
@@ -16,8 +18,6 @@ import com.shouzhong.scanner.Callback;
 import com.shouzhong.scanner.IViewFinder;
 import com.shouzhong.scanner.ScannerView;
 
-import cn.iwgang.licenseplatediscern.LicensePlateDiscernCore;
-import cn.iwgang.licenseplatediscern.LicensePlateInfo;
 import cn.iwgang.licenseplatediscern.view.LicensePlateDiscernView;
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
 import io.flutter.embedding.engine.plugins.activity.ActivityAware;
@@ -27,8 +27,8 @@ import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
-import kotlin.Unit;
-import kotlin.jvm.functions.Function1;
+import io.flutter.embedding.android.FlutterActivity;
+import io.flutter.plugin.common.PluginRegistry;
 
 /** HelloPlugin */
 public class HelloPlugin implements FlutterPlugin, MethodCallHandler, EventChannel.StreamHandler, ActivityAware {
@@ -52,6 +52,13 @@ public class HelloPlugin implements FlutterPlugin, MethodCallHandler, EventChann
   private Vibrator vibrator;
 
 
+  private static final int SCAN_REQUEST_CODE = 1001;
+  private static Result pendingResult;
+
+  public static Result getPendingResult() {
+    return pendingResult;
+  }
+
   // onAttachedToEngine 是 Flutter 插件中的一个生命周期方法，在 Flutter 插件开发中，用于插件和 Flutter 引擎（engine）之间的绑定。
   //  作用：
   //
@@ -68,6 +75,7 @@ public class HelloPlugin implements FlutterPlugin, MethodCallHandler, EventChann
   //  当 Flutter 插件附加到 Flutter 引擎时，onAttachedToEngine 方法被调用。这个方法接受一个 FlutterPluginBinding 对象，它提供了与 Flutter 引擎的交互接口。通过这个接口，插件可以注册与 Flutter 的通信通道，处理消息和事件流等。
   @Override
   public void onAttachedToEngine(@NonNull FlutterPluginBinding flutterPluginBinding) {
+
     // 在插件附加到 Flutter 引擎时执行初始化操作
     this.context = flutterPluginBinding.getApplicationContext();
     // 注册方法通道，处理来自 Flutter 的方法调用
@@ -88,8 +96,7 @@ public class HelloPlugin implements FlutterPlugin, MethodCallHandler, EventChann
     } else if (call.method.equals("getPhoneBatteryCharging")) {
       result.success(getPhoneBatteryCharging(context));
     } else if (call.method.equals("showScan")) {
-      showScan();
-      result.success("OK");
+      showScan(result);
     } else {
       result.notImplemented();
     }
@@ -116,25 +123,66 @@ public class HelloPlugin implements FlutterPlugin, MethodCallHandler, EventChann
 //      });
 //    });
 //  }
-  private void showScan () {
+//  private void showScan (@NonNull Result result) {
+//    activity.runOnUiThread(() -> {
+//      if (scannerView == null) {
+//        activity.setContentView(R.layout.activity_main);
+//        scannerView = activity.findViewById(R.id.sv);
+//        scannerView.setShouldAdjustFocusArea(true);
+//        scannerView.setViewFinder(new ViewFinder2());
+//        scannerView.setRotateDegree90Recognition(true);
+//        scannerView.setEnableLicensePlate(true);
+//        scannerView.setCallback(new Callback() {
+//          @Override
+//          public void result(com.shouzhong.scanner.Result scanResult) {
+//            startVibrator();
+//            result.success(scanResult.data);
+//            closeScan();
+//          }
+//        });
+//        scannerView.onResume();
+//      } else {
+//        scannerView.setVisibility(View.VISIBLE);
+//      }
+//    });
+//  }
+  private void showScan (@NonNull Result result) {
     activity.runOnUiThread(() -> {
-      activity.setContentView(R.layout.activity_main);
-      scannerView = activity.findViewById(R.id.sv);
-      scannerView.setShouldAdjustFocusArea(true);
-      scannerView.setViewFinder(new ViewFinder2());
-      scannerView.setRotateDegree90Recognition(true);
-      scannerView.setEnableLicensePlate(true);
-      scannerView.setCallback(new Callback() {
-        @Override
-        public void result(com.shouzhong.scanner.Result result) {
-          startVibrator();
-          System.out.println("扫描成功");
-          String scanResult = "识别结果：" + result.data ;
-          System.out.println(scanResult);
-          scannerView.restartPreviewAfterDelay(2000);
-        }
-      });
-      scannerView.onResume();
+//      activity.setContentView(R.layout.activity_main);
+//      Button backButton = activity.findViewById(R.id.backButton);
+//      backButton.setOnClickListener(new View.OnClickListener() {
+//        @Override
+//        public void onClick(View v) {
+//        }
+//      });
+      pendingResult = result;
+      Intent intent = new Intent(context, NativeActivity.class);
+      intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+      context.startActivity(intent);
+    });
+  }
+
+//  @Override
+//  public boolean onActivityResult(int requestCode, int resultCode, Intent data) {
+//    System.out.println("=====================================================");
+//    if (requestCode == SCAN_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
+//      if (data != null) {
+//        String scanResult = data.getStringExtra("scanResult");
+//        pendingResult.success(scanResult); // 通过 MethodChannel.Result 回传给 Flutter
+//      } else {
+//        pendingResult.success("没有数据");
+//      }
+//      pendingResult = null; // 防止多次调用
+//    }
+//    return false;
+//  }
+
+  private void closeScan() {
+    activity.runOnUiThread(() -> {
+//      // 结束当前的 Activity
+//      if (scannerView != null) {
+//        scannerView.setVisibility(View.GONE);
+//      }
     });
   }
 

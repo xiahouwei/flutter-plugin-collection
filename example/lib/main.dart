@@ -20,6 +20,7 @@ class _MyAppState extends State<MyApp> {
   String _phoneBattery = 'Unknown';
   String _phoneBatterStatus = 'Unknown';
   String usbString = 'Unknown';
+  String scanResult = 'Unknown';
 
   @override
   void initState() {
@@ -77,10 +78,17 @@ class _MyAppState extends State<MyApp> {
             Text('电量: $_phoneBattery\n'),
             Text('充电状态: $_phoneBatterStatus\n'),
             Text('USB状态: $usbString\n'),
+            Text('扫码结果: $scanResult\n'),
             ElevatedButton(
-              child: Text('扫描'),
+              child: const Text('扫描'),
               onPressed: () {
-                Hello.showScan();
+                Hello.showScan().then((value) {
+                  if (value != null) {
+                    setState(() {
+                      scanResult = value;
+                    });
+                  }
+                });
               },
             )
           ]),

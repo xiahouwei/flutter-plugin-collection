@@ -3,4 +3,12 @@
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.VIBRATE" />
+    <application>
+        <!-- 声明你的原生 Activity -->
+        <activity
+            android:name="com.example.hello.NativeActivity"
+            android:theme="@style/Theme.AppCompat.Light"
+            android:exported="true">
+        </activity>
+    </application>
 </manifest>
