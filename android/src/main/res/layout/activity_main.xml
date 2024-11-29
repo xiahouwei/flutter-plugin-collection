@@ -14,12 +14,17 @@
 <!--        app:layout_constraintEnd_toEndOf="parent"-->
 <!--        app:layout_constraintStart_toStartOf="parent"-->
 <!--        app:layout_constraintTop_toTopOf="parent" />-->
-    <cn.iwgang.licenseplatediscern.view.LicensePlateDiscernView
-        android:id="@+id/cv_licensePlateDiscernView"
+    <com.shouzhong.scanner.ScannerView
+        android:id="@+id/sv"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        app:lpd_borderColor="#80FFFFFF"
-        app:lpd_borderSize="0.5dp"
-        app:lpd_maskColor="#8004040f" />
+        android:layout_height="1080px"
+        android:background="#000000"/>
+<!--    <cn.iwgang.licenseplatediscern.view.LicensePlateDiscernView-->
+<!--        android:id="@+id/cv_licensePlateDiscernView"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="match_parent"-->
+<!--        app:lpd_borderColor="#80FFFFFF"-->
+<!--        app:lpd_borderSize="0.5dp"-->
+<!--        app:lpd_maskColor="#8004040f" />-->
 
 </androidx.constraintlayout.widget.ConstraintLayout>

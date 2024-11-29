@@ -5,10 +5,16 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Rect;
 import android.os.BatteryManager;
+import android.os.Vibrator;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+
+import com.shouzhong.scanner.Callback;
+import com.shouzhong.scanner.IViewFinder;
+import com.shouzhong.scanner.ScannerView;
 
 import cn.iwgang.licenseplatediscern.LicensePlateDiscernCore;
 import cn.iwgang.licenseplatediscern.LicensePlateInfo;
@@ -42,6 +48,9 @@ public class HelloPlugin implements FlutterPlugin, MethodCallHandler, EventChann
 
   private LicensePlateDiscernView cvLicensePlateDiscernView;
 
+  private ScannerView scannerView;
+  private Vibrator vibrator;
+
 
   // onAttachedToEngine 是 Flutter 插件中的一个生命周期方法，在 Flutter 插件开发中，用于插件和 Flutter 引擎（engine）之间的绑定。
   //  作用：
@@ -67,7 +76,7 @@ public class HelloPlugin implements FlutterPlugin, MethodCallHandler, EventChann
     // 注册事件通道，处理来自 Flutter 的事件流
     EventChannel eventChannel = new EventChannel(flutterPluginBinding.getBinaryMessenger(), "hello.eventChannel");
     eventChannel.setStreamHandler((EventChannel.StreamHandler) this);
-    LicensePlateDiscernCore.Companion.init(this.context);
+//    LicensePlateDiscernCore.Companion.init(this.context);
   }
 
   @Override
@@ -86,26 +95,61 @@ public class HelloPlugin implements FlutterPlugin, MethodCallHandler, EventChann
     }
   }
 
+//  private void showScan () {
+//    activity.runOnUiThread(() -> {
+//      activity.setContentView(R.layout.activity_main);
+//      // 通过 ID 获取 LicensePlateDiscernView
+//      cvLicensePlateDiscernView = activity.findViewById(R.id.cv_licensePlateDiscernView);
+//      // 设置车牌识别回调监听器
+//      cvLicensePlateDiscernView.setOnDiscernListener(new Function1<LicensePlateInfo, Unit>() {
+//        @Override
+//        public Unit invoke(LicensePlateInfo result) {
+//          // 处理回调逻辑
+//          String scanResult = "识别结果：" + result.getLicensePlate() + "（可信度：" + result.getConfidence() + "）";
+//          System.out.println(scanResult);
+//
+//          // 重新识别
+//          cvLicensePlateDiscernView.reDiscern();
+//
+//          return Unit.INSTANCE; // 必须返回 Unit.INSTANCE
+//        }
+//      });
+//    });
+//  }
   private void showScan () {
     activity.runOnUiThread(() -> {
       activity.setContentView(R.layout.activity_main);
-      // 通过 ID 获取 LicensePlateDiscernView
-      cvLicensePlateDiscernView = activity.findViewById(R.id.cv_licensePlateDiscernView);
-      // 设置车牌识别回调监听器
-      cvLicensePlateDiscernView.setOnDiscernListener(new Function1<LicensePlateInfo, Unit>() {
+      scannerView = activity.findViewById(R.id.sv);
+      scannerView.setShouldAdjustFocusArea(true);
+      scannerView.setViewFinder(new ViewFinder2());
+      scannerView.setRotateDegree90Recognition(true);
+      scannerView.setEnableLicensePlate(true);
+      scannerView.setCallback(new Callback() {
         @Override
-        public Unit invoke(LicensePlateInfo result) {
-          // 处理回调逻辑
-          String scanResult = "识别结果：" + result.getLicensePlate() + "（可信度：" + result.getConfidence() + "）";
+        public void result(com.shouzhong.scanner.Result result) {
+          startVibrator();
+          System.out.println("扫描成功");
+          String scanResult = "识别结果：" + result.data ;
           System.out.println(scanResult);
-
-          // 重新识别
-          cvLicensePlateDiscernView.reDiscern();
-
-          return Unit.INSTANCE; // 必须返回 Unit.INSTANCE
+          scannerView.restartPreviewAfterDelay(2000);
         }
       });
+      scannerView.onResume();
     });
+  }
+
+  private void startVibrator() {
+    if (vibrator == null)
+      vibrator = (Vibrator) activity.getSystemService(Context.VIBRATOR_SERVICE);
+    vibrator.vibrate(300);
+  }
+
+
+  class ViewFinder2 implements IViewFinder {
+    @Override
+    public Rect getFramingRect() {
+      return new Rect(240, 240, 840, 840);
+    }
   }
 
   private int getPhoneBattery(Context context) {
